@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #2563eb;
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content h2 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #2563eb;
+            color: white;
+            padding: 14px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px 30px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .url-container {
+            word-break: break-all;
+            color: #6b7280;
+            font-size: 14px;
+            background-color: #f9fafb;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Recuperar Contraseña</h1>
+        </div>
+
+        <div class="content">
+            <h2>Hola {{.nombre}},</h2>
+
+            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>SGI Tickets</strong>.</p>
+
+            <p>Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+
+            <div style="text-align: center;">
+                <a href="{{.reset_url}}" class="btn">Restablecer Contraseña</a>
+            </div>
+
+            <p>O copia y pega este enlace en tu navegador:</p>
+            <div class="url-container">{{.reset_url}}</div>
+
+            <div class="warning">
+                <strong>Importante:</strong> Este enlace expirará en <strong>1 hora</strong>. Si no solicitaste este cambio, ignora este correo.
+            </div>
+
+            <p>Si tienes algún problema, contacta al administrador del sistema.</p>
+        </div>
+
+        <div class="footer">
+            <p><strong>SGI - Sistema de Gestión de Interventorías</strong></p>
+            <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+        </div>
+    </div>
+</body>
+</html>

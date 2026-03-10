@@ -1,0 +1,290 @@
+@startuml tickets_DB
+
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+
+' ─────────────────────────────────────────
+'  CATÁLOGOS CONFIGURABLES (admin panel)
+' ─────────────────────────────────────────
+
+class tickets_dependencias {
+  id: bigint <<PK>>
+  nombre: text
+  codigo: text
+  descripcion: text
+  activo: boolean
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+class tickets_subdependencias {
+  id: bigint <<PK>>
+  dependencia_id: bigint <<FK>>
+  nombre: text
+  activo: boolean
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+class tickets_tipos {
+  id: bigint <<PK>>
+  nombre: text
+  descripcion: text
+  activo: boolean
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+class tickets_subtipos {
+  id: bigint <<PK>>
+  tipo_id: bigint <<FK>>
+  nombre: text
+  activo: boolean
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+class tickets_prioridades {
+  id: bigint <<PK>>
+  nombre: text
+  nivel: integer
+  color: text
+  activo: boolean
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+class tickets_estados {
+  id: bigint <<PK>>
+  nombre: text
+  codigo: text
+  descripcion: text
+  color: text
+  es_inicial: boolean
+  es_final: boolean
+  requiere_aprobacion: boolean
+  orden: integer
+  activo: boolean
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  USUARIOS DEL PORTAL DE TICKETS
+' ─────────────────────────────────────────
+
+class tickets_usuarios {
+  id: bigint <<PK>>
+  nombres: text
+  apellidos: text
+  email: text
+  password: text
+  rol: text
+  ' roles: admin | supervisor | agente | entidad | contratista
+  origen: text
+  ' origen: local | sgi (usuarios que vienen del SGI)
+  sgi_usuario_id: bigint
+  ' FK lógica a usuarios.id del SGI (si origen=sgi)
+  dependencia_id: bigint <<FK>>
+  ' para usuarios de tipo entidad
+  totp_token: text
+  reset_token: text
+  activo: boolean
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  BANDEJA DE ENTRADA DE EMAIL
+' ─────────────────────────────────────────
+
+class tickets_email_bandeja {
+  id: bigint <<PK>>
+  message_id: text
+  ' ID único del email (header Message-ID)
+  asunto: text
+  cuerpo: text
+  remitente_email: text
+  remitente_nombre: text
+  link_correo: text
+  fecha_recibido: timestamptz
+  procesado: boolean
+  ticket_id: bigint <<FK>>
+  ' null hasta que un agente confirma y crea el ticket
+  created_at: timestamptz
+  updated_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  TICKET (entidad central)
+' ─────────────────────────────────────────
+
+class tickets {
+  id: bigint <<PK>>
+  numero: text
+  ' ej: TK-2391 — secuencial, único, legible
+  asunto: text
+  descripcion: text
+  dependencia_id: bigint <<FK>>
+  subdependencia_id: bigint <<FK>>
+  tipo_id: bigint <<FK>>
+  subtipo_id: bigint <<FK>>
+  prioridad_id: bigint <<FK>>
+  estado_id: bigint <<FK>>
+  solicitante_id: bigint <<FK>>
+  ' tickets_usuarios con rol=entidad
+  agente_id: bigint <<FK>>
+  ' tickets_usuarios con rol=agente|supervisor (o sgi_usuario_id)
+  contratista_id: bigint <<FK>>
+  ' tickets_usuarios con rol=contratista
+  ppl_nombre: text
+  ppl_nui: text
+  link_correo: text
+  email_bandeja_id: bigint <<FK>>
+  ' referencia al email origen (si fue creado desde email)
+  visita_id: bigint
+  ' FK lógica a visitas.id del SGI (referencia cruzada opcional)
+  fecha_limite: timestamptz
+  ' calculada según ANS del tipo de ticket
+  aprobacion_entidad: boolean
+  aprobacion_interventoria: boolean
+  fecha_aprobacion_entidad: timestamptz
+  fecha_aprobacion_interventoria: timestamptz
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  HISTORIAL DE ESTADOS
+' ─────────────────────────────────────────
+
+class tickets_estados_log {
+  id: bigint <<PK>>
+  ticket_id: bigint <<FK>>
+  estado_anterior_id: bigint <<FK>>
+  estado_nuevo_id: bigint <<FK>>
+  usuario_id: bigint <<FK>>
+  ' tickets_usuarios que hizo el cambio
+  observaciones: text
+  created_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  COMENTARIOS (hilo conversacional)
+' ─────────────────────────────────────────
+
+class tickets_comentarios {
+  id: bigint <<PK>>
+  ticket_id: bigint <<FK>>
+  usuario_id: bigint <<FK>>
+  contenido: text
+  interno: boolean
+  ' true = solo visible para interventoría, false = visible para todos
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  ARCHIVOS ADJUNTOS
+' ─────────────────────────────────────────
+
+class tickets_archivos {
+  id: bigint <<PK>>
+  ticket_id: bigint <<FK>>
+  comentario_id: bigint <<FK>>
+  ' null si adjunto al ticket directamente
+  usuario_id: bigint <<FK>>
+  nombre: text
+  nombre_storage: text
+  path: text
+  tipo: text
+  ' image/png, application/pdf, etc.
+  tamanio: bigint
+  created_at: timestamptz
+  updated_at: timestamptz
+  deleted_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  NOTIFICACIONES
+' ─────────────────────────────────────────
+
+class tickets_notificaciones {
+  id: bigint <<PK>>
+  ticket_id: bigint <<FK>>
+  usuario_id: bigint <<FK>>
+  tipo: text
+  ' creacion | cambio_estado | comentario | cierre | reapertura
+  asunto: text
+  cuerpo: text
+  enviado: boolean
+  fecha_envio: timestamptz
+  error: text
+  created_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  APROBACIONES DE CIERRE
+' ─────────────────────────────────────────
+
+class tickets_aprobaciones {
+  id: bigint <<PK>>
+  ticket_id: bigint <<FK>>
+  usuario_id: bigint <<FK>>
+  tipo_aprobador: text
+  ' entidad | interventoria
+  aprobado: boolean
+  observaciones: text
+  created_at: timestamptz
+}
+
+' ─────────────────────────────────────────
+'  RELACIONES
+' ─────────────────────────────────────────
+
+tickets_subdependencias   -[#595959,plain]-^  tickets_dependencias    : "dependencia_id:id"
+tickets_subtipos          -[#595959,plain]-^  tickets_tipos           : "tipo_id:id"
+tickets_usuarios          -[#595959,plain]-^  tickets_dependencias    : "dependencia_id:id"
+
+tickets                   -[#595959,plain]-^  tickets_dependencias    : "dependencia_id:id"
+tickets                   -[#595959,plain]-^  tickets_subdependencias : "subdependencia_id:id"
+tickets                   -[#595959,plain]-^  tickets_tipos           : "tipo_id:id"
+tickets                   -[#595959,plain]-^  tickets_subtipos        : "subtipo_id:id"
+tickets                   -[#595959,plain]-^  tickets_prioridades     : "prioridad_id:id"
+tickets                   -[#595959,plain]-^  tickets_estados         : "estado_id:id"
+tickets                   -[#595959,plain]-^  tickets_usuarios        : "solicitante_id:id"
+tickets                   -[#595959,plain]-^  tickets_usuarios        : "agente_id:id"
+tickets                   -[#595959,plain]-^  tickets_usuarios        : "contratista_id:id"
+tickets                   -[#595959,plain]-^  tickets_email_bandeja   : "email_bandeja_id:id"
+
+tickets_email_bandeja     -[#595959,plain]-^  tickets                 : "ticket_id:id"
+
+tickets_estados_log       -[#595959,plain]-^  tickets                 : "ticket_id:id"
+tickets_estados_log       -[#595959,plain]-^  tickets_estados         : "estado_anterior_id:id"
+tickets_estados_log       -[#595959,plain]-^  tickets_estados         : "estado_nuevo_id:id"
+tickets_estados_log       -[#595959,plain]-^  tickets_usuarios        : "usuario_id:id"
+
+tickets_comentarios       -[#595959,plain]-^  tickets                 : "ticket_id:id"
+tickets_comentarios       -[#595959,plain]-^  tickets_usuarios        : "usuario_id:id"
+
+tickets_archivos          -[#595959,plain]-^  tickets                 : "ticket_id:id"
+tickets_archivos          -[#595959,plain]-^  tickets_comentarios     : "comentario_id:id"
+tickets_archivos          -[#595959,plain]-^  tickets_usuarios        : "usuario_id:id"
+
+tickets_notificaciones    -[#595959,plain]-^  tickets                 : "ticket_id:id"
+tickets_notificaciones    -[#595959,plain]-^  tickets_usuarios        : "usuario_id:id"
+
+tickets_aprobaciones      -[#595959,plain]-^  tickets                 : "ticket_id:id"
+tickets_aprobaciones      -[#595959,plain]-^  tickets_usuarios        : "usuario_id:id"
+
+@enduml
