@@ -9,12 +9,36 @@ import (
 	"sgi-tickets-back/migrations"
 	"sgi-tickets-back/storage"
 
+	_ "sgi-tickets-back/docs" // Importar docs generados por swag
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	html "github.com/gofiber/template/html/v2"
 	"github.com/joho/godotenv"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
+
+// @title SGI Tickets API
+// @version 1.0
+// @description API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura
+// @description
+// @description **Autenticación**: Sistema basado en cookies con 2FA
+// @description - Cookie `sgi_user_email`: Sesión de usuario
+// @description - Cookie `sgi_identity`: Verificación 2FA
+// @description
+// @description **Roles disponibles**: admin, supervisor, agente, entidad, contratista
+// @contact.name Soporte Técnico SGI
+// @contact.email soporte@sgi.com
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http https
+// @securityDefinitions.apikey CookieAuth
+// @in cookie
+// @name sgi_user_email
+// @securityDefinitions.apikey TwoFactorAuth
+// @in cookie
+// @name sgi_identity
 
 func main() {
 	// Cargar .env si existe (opcional, para desarrollo local)
@@ -52,11 +76,16 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// Documentación Swagger (debe estar antes del SPA fallback)
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+
 	app.Static("/", "./public", fiber.Static{Browse: false})
 
 	// React SPA fallback
 	app.Use(func(c *fiber.Ctx) error {
-		if len(c.Path()) >= 4 && c.Path()[:4] == "/api" {
+		path := c.Path()
+		// Excluir /api y /swagger del SPA fallback
+		if (len(path) >= 4 && path[:4] == "/api") || (len(path) >= 8 && path[:8] == "/swagger") {
 			return c.Next()
 		}
 		return c.SendFile("./public/index.html")

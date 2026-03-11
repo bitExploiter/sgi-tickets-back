@@ -1,0 +1,539 @@
+basePath: /api/v1
+definitions:
+  handlers.Activar2FARequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  handlers.ChangePasswordRequest:
+    properties:
+      nueva_password:
+        minLength: 8
+        type: string
+      password_actual:
+        type: string
+    required:
+    - nueva_password
+    - password_actual
+    type: object
+  handlers.Desactivar2FARequest:
+    properties:
+      password:
+        type: string
+    required:
+    - password
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.RecoverRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  handlers.ResetRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
+  handlers.Setup2FARequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+  handlers.UpdatePerfilRequest:
+    properties:
+      apellidos:
+        type: string
+      nombres:
+        type: string
+      numero_documento:
+        type: string
+      telefono:
+        type: string
+      tipo_documento:
+        type: string
+    required:
+    - apellidos
+    - nombres
+    type: object
+  handlers.Verify2FARequest:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: soporte@sgi.com
+    name: Soporte Técnico SGI
+  description: |-
+    API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura
+
+    **Autenticación**: Sistema basado en cookies con 2FA
+    - Cookie `sgi_user_email`: Sesión de usuario
+    - Cookie `sgi_identity`: Verificación 2FA
+
+    **Roles disponibles**: admin, supervisor, agente, entidad, contratista
+  title: SGI Tickets API
+  version: "1.0"
+paths:
+  /api/version:
+    get:
+      description: Devuelve la versión actual de la API y el nombre del sistema
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Información de versión
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Obtener versión de la API
+      tags:
+      - Sistema
+  /auth/2fa/setup:
+    get:
+      consumes:
+      - application/json
+      description: 'GET: Genera un código QR para configurar 2FA. POST: Verifica el
+        código y activa 2FA'
+      parameters:
+      - description: Código de verificación (solo para POST)
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handlers.Setup2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: QR generado o 2FA activado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Código incorrecto o no hay configuración pendiente
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      summary: Configurar autenticación de dos factores
+      tags:
+      - Autenticación - 2FA
+    post:
+      consumes:
+      - application/json
+      description: 'GET: Genera un código QR para configurar 2FA. POST: Verifica el
+        código y activa 2FA'
+      parameters:
+      - description: Código de verificación (solo para POST)
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handlers.Setup2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: QR generado o 2FA activado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Código incorrecto o no hay configuración pendiente
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      summary: Configurar autenticación de dos factores
+      tags:
+      - Autenticación - 2FA
+  /auth/2fa/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifica el código TOTP generado por la aplicación de autenticación
+        y completa el inicio de sesión
+      parameters:
+      - description: Código de verificación TOTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Verify2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Código correcto - sesión completa establecida
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos o 2FA no configurado
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Código incorrecto
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      summary: Verificar código 2FA
+      tags:
+      - Autenticación - 2FA
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica un usuario con email y contraseña. Si el rol requiere
+        2FA, devuelve el estado de configuración 2FA
+      parameters:
+      - description: Credenciales de acceso
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login exitoso - puede requerir 2FA
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Credenciales incorrectas
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Usuario deshabilitado
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Iniciar sesión
+      tags:
+      - Autenticación
+  /auth/logout:
+    post:
+      description: Invalida las cookies de sesión y cierra la sesión del usuario
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Sesión cerrada exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      summary: Cerrar sesión
+      tags:
+      - Autenticación
+  /auth/recover:
+    post:
+      consumes:
+      - application/json
+      description: Envía un email con un enlace para restablecer la contraseña si
+        el usuario existe
+      parameters:
+      - description: Email del usuario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RecoverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email enviado (si el usuario existe)
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Solicitar recuperación de contraseña
+      tags:
+      - Autenticación
+  /auth/reset:
+    post:
+      consumes:
+      - application/json
+      description: Cambia la contraseña del usuario usando el token recibido por email
+      parameters:
+      - description: Token y nueva contraseña
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contraseña actualizada exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Token inválido, expirado o datos inválidos
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Restablecer contraseña
+      tags:
+      - Autenticación
+  /perfil:
+    get:
+      description: Devuelve la información completa del perfil del usuario autenticado,
+        incluyendo sus datos personales, rol y dependencia
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Datos del perfil del usuario
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Obtener perfil del usuario autenticado
+      tags:
+      - Perfil
+    put:
+      consumes:
+      - application/json
+      description: Permite al usuario autenticado actualizar su información personal
+        (nombres, apellidos, documento, teléfono)
+      parameters:
+      - description: Datos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePerfilRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Perfil actualizado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos o errores de validación
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autenticado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Actualizar información personal del usuario
+      tags:
+      - Perfil
+  /perfil/2fa/activar:
+    get:
+      consumes:
+      - application/json
+      description: 'GET: Genera un código QR para activar 2FA. POST: Verifica el código
+        y activa 2FA en el perfil del usuario'
+      parameters:
+      - description: Código de verificación (solo para POST)
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handlers.Activar2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: QR generado o 2FA activado
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Código incorrecto o no hay configuración pendiente
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Activar 2FA en el perfil
+      tags:
+      - Perfil - Seguridad
+    post:
+      consumes:
+      - application/json
+      description: 'GET: Genera un código QR para activar 2FA. POST: Verifica el código
+        y activa 2FA en el perfil del usuario'
+      parameters:
+      - description: Código de verificación (solo para POST)
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handlers.Activar2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: QR generado o 2FA activado
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Código incorrecto o no hay configuración pendiente
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Activar 2FA en el perfil
+      tags:
+      - Perfil - Seguridad
+  /perfil/2fa/desactivar:
+    post:
+      consumes:
+      - application/json
+      description: Desactiva la autenticación de dos factores del usuario. Requiere
+        contraseña para confirmar
+      parameters:
+      - description: Contraseña del usuario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Desactivar2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 2FA desactivado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 2FA no está activo
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Contraseña incorrecta
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Desactivar 2FA en el perfil
+      tags:
+      - Perfil - Seguridad
+  /perfil/password:
+    put:
+      consumes:
+      - application/json
+      description: Permite al usuario cambiar su contraseña verificando primero la
+        contraseña actual. La nueva contraseña debe tener al menos 8 caracteres
+      parameters:
+      - description: Contraseña actual y nueva contraseña
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contraseña actualizada exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos o errores de validación
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Contraseña actual incorrecta
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Cambiar contraseña del usuario autenticado
+      tags:
+      - Perfil
+schemes:
+- http
+- https
+securityDefinitions:
+  CookieAuth:
+    in: cookie
+    name: sgi_user_email
+    type: apiKey
+  TwoFactorAuth:
+    in: cookie
+    name: sgi_identity
+    type: apiKey
+swagger: "2.0"

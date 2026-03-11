@@ -39,9 +39,18 @@ type ResetRequest struct {
 	NewPassword string `json:"new_password" validate:"required,min=8"`
 }
 
-// ==========================================
-// POST /api/v1/auth/login
-// ==========================================
+// Login godoc
+// @Summary Iniciar sesión
+// @Description Autentica un usuario con email y contraseña. Si el rol requiere 2FA, devuelve el estado de configuración 2FA
+// @Tags Autenticación
+// @Accept json
+// @Produce json
+// @Param body body LoginRequest true "Credenciales de acceso"
+// @Success 200 {object} map[string]interface{} "Login exitoso - puede requerir 2FA"
+// @Failure 400 {object} map[string]interface{} "Datos inválidos"
+// @Failure 401 {object} map[string]interface{} "Credenciales incorrectas"
+// @Failure 403 {object} map[string]interface{} "Usuario deshabilitado"
+// @Router /auth/login [post]
 func Login(c *fiber.Ctx) error {
 	var request LoginRequest
 
@@ -167,11 +176,19 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// GET /api/v1/auth/2fa/setup (generar QR)
-// POST /api/v1/auth/2fa/setup (confirmar código)
-// Configurar TOTP por primera vez (requiere cookie sgi_user_email)
-// ==========================================
+// Setup2FA godoc
+// @Summary Configurar autenticación de dos factores
+// @Description GET: Genera un código QR para configurar 2FA. POST: Verifica el código y activa 2FA
+// @Tags Autenticación - 2FA
+// @Accept json
+// @Produce json
+// @Param body body Setup2FARequest false "Código de verificación (solo para POST)"
+// @Success 200 {object} map[string]interface{} "QR generado o 2FA activado exitosamente"
+// @Failure 400 {object} map[string]interface{} "Código incorrecto o no hay configuración pendiente"
+// @Failure 401 {object} map[string]interface{} "No autenticado"
+// @Router /auth/2fa/setup [get]
+// @Router /auth/2fa/setup [post]
+// @Security CookieAuth
 func Setup2FA(c *fiber.Ctx) error {
 	// Obtener usuario de la sesión (via CookieMiddleware)
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
@@ -283,10 +300,18 @@ func Setup2FA(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// POST /api/v1/auth/2fa/verify
-// Verificar código TOTP (requiere cookie sgi_user_email)
-// ==========================================
+// Verify2FA godoc
+// @Summary Verificar código 2FA
+// @Description Verifica el código TOTP generado por la aplicación de autenticación y completa el inicio de sesión
+// @Tags Autenticación - 2FA
+// @Accept json
+// @Produce json
+// @Param body body Verify2FARequest true "Código de verificación TOTP"
+// @Success 200 {object} map[string]interface{} "Código correcto - sesión completa establecida"
+// @Failure 400 {object} map[string]interface{} "Datos inválidos o 2FA no configurado"
+// @Failure 401 {object} map[string]interface{} "Código incorrecto"
+// @Router /auth/2fa/verify [post]
+// @Security CookieAuth
 func Verify2FA(c *fiber.Ctx) error {
 	var request Verify2FARequest
 
@@ -361,10 +386,14 @@ func Verify2FA(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// POST /api/v1/auth/logout
-// Cerrar sesión (deshabilitar cookies)
-// ==========================================
+// Logout godoc
+// @Summary Cerrar sesión
+// @Description Invalida las cookies de sesión y cierra la sesión del usuario
+// @Tags Autenticación
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Sesión cerrada exitosamente"
+// @Router /auth/logout [post]
+// @Security CookieAuth
 func Logout(c *fiber.Ctx) error {
 	// Obtener usuario de la sesión
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
@@ -405,10 +434,16 @@ func Logout(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// POST /api/v1/auth/recover
-// Solicitar recuperación de contraseña (envía email)
-// ==========================================
+// RecoverPassword godoc
+// @Summary Solicitar recuperación de contraseña
+// @Description Envía un email con un enlace para restablecer la contraseña si el usuario existe
+// @Tags Autenticación
+// @Accept json
+// @Produce json
+// @Param body body RecoverRequest true "Email del usuario"
+// @Success 200 {object} map[string]interface{} "Email enviado (si el usuario existe)"
+// @Failure 400 {object} map[string]interface{} "Datos inválidos"
+// @Router /auth/recover [post]
 func RecoverPassword(c *fiber.Ctx) error {
 	var request RecoverRequest
 
@@ -479,10 +514,16 @@ func RecoverPassword(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// POST /api/v1/auth/reset
-// Cambiar contraseña con token
-// ==========================================
+// ResetPassword godoc
+// @Summary Restablecer contraseña
+// @Description Cambia la contraseña del usuario usando el token recibido por email
+// @Tags Autenticación
+// @Accept json
+// @Produce json
+// @Param body body ResetRequest true "Token y nueva contraseña"
+// @Success 200 {object} map[string]interface{} "Contraseña actualizada exitosamente"
+// @Failure 400 {object} map[string]interface{} "Token inválido, expirado o datos inválidos"
+// @Router /auth/reset [post]
 func ResetPassword(c *fiber.Ctx) error {
 	var request ResetRequest
 

@@ -1,0 +1,806 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura\n\n**Autenticación**: Sistema basado en cookies con 2FA\n- Cookie `sgi_user_email`: Sesión de usuario\n- Cookie `sgi_identity`: Verificación 2FA\n\n**Roles disponibles**: admin, supervisor, agente, entidad, contratista",
+        "title": "SGI Tickets API",
+        "contact": {
+            "name": "Soporte Técnico SGI",
+            "email": "soporte@sgi.com"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/api/version": {
+            "get": {
+                "description": "Devuelve la versión actual de la API y el nombre del sistema",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sistema"
+                ],
+                "summary": "Obtener versión de la API",
+                "responses": {
+                    "200": {
+                        "description": "Información de versión",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/2fa/setup": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "GET: Genera un código QR para configurar 2FA. POST: Verifica el código y activa 2FA",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticación - 2FA"
+                ],
+                "summary": "Configurar autenticación de dos factores",
+                "parameters": [
+                    {
+                        "description": "Código de verificación (solo para POST)",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Setup2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR generado o 2FA activado exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Código incorrecto o no hay configuración pendiente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "GET: Genera un código QR para configurar 2FA. POST: Verifica el código y activa 2FA",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticación - 2FA"
+                ],
+                "summary": "Configurar autenticación de dos factores",
+                "parameters": [
+                    {
+                        "description": "Código de verificación (solo para POST)",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Setup2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR generado o 2FA activado exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Código incorrecto o no hay configuración pendiente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/2fa/verify": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Verifica el código TOTP generado por la aplicación de autenticación y completa el inicio de sesión",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticación - 2FA"
+                ],
+                "summary": "Verificar código 2FA",
+                "parameters": [
+                    {
+                        "description": "Código de verificación TOTP",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Verify2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Código correcto - sesión completa establecida",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos o 2FA no configurado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Código incorrecto",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Autentica un usuario con email y contraseña. Si el rol requiere 2FA, devuelve el estado de configuración 2FA",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Iniciar sesión",
+                "parameters": [
+                    {
+                        "description": "Credenciales de acceso",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login exitoso - puede requerir 2FA",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Credenciales incorrectas",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Usuario deshabilitado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Invalida las cookies de sesión y cierra la sesión del usuario",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Cerrar sesión",
+                "responses": {
+                    "200": {
+                        "description": "Sesión cerrada exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/recover": {
+            "post": {
+                "description": "Envía un email con un enlace para restablecer la contraseña si el usuario existe",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Solicitar recuperación de contraseña",
+                "parameters": [
+                    {
+                        "description": "Email del usuario",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RecoverRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email enviado (si el usuario existe)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/reset": {
+            "post": {
+                "description": "Cambia la contraseña del usuario usando el token recibido por email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Restablecer contraseña",
+                "parameters": [
+                    {
+                        "description": "Token y nueva contraseña",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contraseña actualizada exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Token inválido, expirado o datos inválidos",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/perfil": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Devuelve la información completa del perfil del usuario autenticado, incluyendo sus datos personales, rol y dependencia",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Obtener perfil del usuario autenticado",
+                "responses": {
+                    "200": {
+                        "description": "Datos del perfil del usuario",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Permite al usuario autenticado actualizar su información personal (nombres, apellidos, documento, teléfono)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Actualizar información personal del usuario",
+                "parameters": [
+                    {
+                        "description": "Datos a actualizar",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdatePerfilRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Perfil actualizado exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos o errores de validación",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/perfil/2fa/activar": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "GET: Genera un código QR para activar 2FA. POST: Verifica el código y activa 2FA en el perfil del usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Perfil - Seguridad"
+                ],
+                "summary": "Activar 2FA en el perfil",
+                "parameters": [
+                    {
+                        "description": "Código de verificación (solo para POST)",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Activar2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR generado o 2FA activado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Código incorrecto o no hay configuración pendiente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "GET: Genera un código QR para activar 2FA. POST: Verifica el código y activa 2FA en el perfil del usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Perfil - Seguridad"
+                ],
+                "summary": "Activar 2FA en el perfil",
+                "parameters": [
+                    {
+                        "description": "Código de verificación (solo para POST)",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Activar2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "QR generado o 2FA activado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Código incorrecto o no hay configuración pendiente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/perfil/2fa/desactivar": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Desactiva la autenticación de dos factores del usuario. Requiere contraseña para confirmar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Perfil - Seguridad"
+                ],
+                "summary": "Desactivar 2FA en el perfil",
+                "parameters": [
+                    {
+                        "description": "Contraseña del usuario",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.Desactivar2FARequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "2FA desactivado exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "2FA no está activo",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Contraseña incorrecta",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/perfil/password": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Permite al usuario cambiar su contraseña verificando primero la contraseña actual. La nueva contraseña debe tener al menos 8 caracteres",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Perfil"
+                ],
+                "summary": "Cambiar contraseña del usuario autenticado",
+                "parameters": [
+                    {
+                        "description": "Contraseña actual y nueva contraseña",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contraseña actualizada exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos o errores de validación",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Contraseña actual incorrecta",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handlers.Activar2FARequest": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "nueva_password",
+                "password_actual"
+            ],
+            "properties": {
+                "nueva_password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "password_actual": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.Desactivar2FARequest": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.RecoverRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.ResetRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "token"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.Setup2FARequest": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.UpdatePerfilRequest": {
+            "type": "object",
+            "required": [
+                "apellidos",
+                "nombres"
+            ],
+            "properties": {
+                "apellidos": {
+                    "type": "string"
+                },
+                "nombres": {
+                    "type": "string"
+                },
+                "numero_documento": {
+                    "type": "string"
+                },
+                "telefono": {
+                    "type": "string"
+                },
+                "tipo_documento": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.Verify2FARequest": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "CookieAuth": {
+            "type": "apiKey",
+            "name": "sgi_user_email",
+            "in": "cookie"
+        },
+        "TwoFactorAuth": {
+            "type": "apiKey",
+            "name": "sgi_identity",
+            "in": "cookie"
+        }
+    }
+}

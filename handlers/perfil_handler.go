@@ -33,10 +33,16 @@ type Desactivar2FARequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-// ==========================================
-// GET /api/v1/perfil
-// Obtener perfil del usuario autenticado
-// ==========================================
+// GetPerfil godoc
+// @Summary Obtener perfil del usuario autenticado
+// @Description Devuelve la información completa del perfil del usuario autenticado, incluyendo sus datos personales, rol y dependencia
+// @Tags Perfil
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Datos del perfil del usuario"
+// @Failure 401 {object} map[string]interface{} "No autenticado"
+// @Router /perfil [get]
+// @Security CookieAuth
+// @Security TwoFactorAuth
 func GetPerfil(c *fiber.Ctx) error {
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
 
@@ -66,10 +72,19 @@ func GetPerfil(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// PUT /api/v1/perfil
-// Actualizar información personal del usuario
-// ==========================================
+// UpdatePerfil godoc
+// @Summary Actualizar información personal del usuario
+// @Description Permite al usuario autenticado actualizar su información personal (nombres, apellidos, documento, teléfono)
+// @Tags Perfil
+// @Accept json
+// @Produce json
+// @Param body body UpdatePerfilRequest true "Datos a actualizar"
+// @Success 200 {object} map[string]interface{} "Perfil actualizado exitosamente"
+// @Failure 400 {object} map[string]interface{} "Datos inválidos o errores de validación"
+// @Failure 401 {object} map[string]interface{} "No autenticado"
+// @Router /perfil [put]
+// @Security CookieAuth
+// @Security TwoFactorAuth
 func UpdatePerfil(c *fiber.Ctx) error {
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
 
@@ -128,10 +143,19 @@ func UpdatePerfil(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// PUT /api/v1/perfil/password
-// Cambiar contraseña del usuario autenticado
-// ==========================================
+// ChangePassword godoc
+// @Summary Cambiar contraseña del usuario autenticado
+// @Description Permite al usuario cambiar su contraseña verificando primero la contraseña actual. La nueva contraseña debe tener al menos 8 caracteres
+// @Tags Perfil
+// @Accept json
+// @Produce json
+// @Param body body ChangePasswordRequest true "Contraseña actual y nueva contraseña"
+// @Success 200 {object} map[string]interface{} "Contraseña actualizada exitosamente"
+// @Failure 400 {object} map[string]interface{} "Datos inválidos o errores de validación"
+// @Failure 401 {object} map[string]interface{} "Contraseña actual incorrecta"
+// @Router /perfil/password [put]
+// @Security CookieAuth
+// @Security TwoFactorAuth
 func ChangePassword(c *fiber.Ctx) error {
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
 
@@ -185,11 +209,19 @@ func ChangePassword(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// GET /api/v1/perfil/2fa/activar  (generar QR)
-// POST /api/v1/perfil/2fa/activar (confirmar código)
-// Activar autenticación de dos factores
-// ==========================================
+// Activar2FA godoc
+// @Summary Activar 2FA en el perfil
+// @Description GET: Genera un código QR para activar 2FA. POST: Verifica el código y activa 2FA en el perfil del usuario
+// @Tags Perfil - Seguridad
+// @Accept json
+// @Produce json
+// @Param body body Activar2FARequest false "Código de verificación (solo para POST)"
+// @Success 200 {object} map[string]interface{} "QR generado o 2FA activado"
+// @Failure 400 {object} map[string]interface{} "Código incorrecto o no hay configuración pendiente"
+// @Router /perfil/2fa/activar [get]
+// @Router /perfil/2fa/activar [post]
+// @Security CookieAuth
+// @Security TwoFactorAuth
 func Activar2FA(c *fiber.Ctx) error {
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
 
@@ -279,10 +311,19 @@ func Activar2FA(c *fiber.Ctx) error {
 	})
 }
 
-// ==========================================
-// POST /api/v1/perfil/2fa/desactivar
-// Desactivar autenticación de dos factores
-// ==========================================
+// Desactivar2FA godoc
+// @Summary Desactivar 2FA en el perfil
+// @Description Desactiva la autenticación de dos factores del usuario. Requiere contraseña para confirmar
+// @Tags Perfil - Seguridad
+// @Accept json
+// @Produce json
+// @Param body body Desactivar2FARequest true "Contraseña del usuario"
+// @Success 200 {object} map[string]interface{} "2FA desactivado exitosamente"
+// @Failure 400 {object} map[string]interface{} "2FA no está activo"
+// @Failure 401 {object} map[string]interface{} "Contraseña incorrecta"
+// @Router /perfil/2fa/desactivar [post]
+// @Security CookieAuth
+// @Security TwoFactorAuth
 func Desactivar2FA(c *fiber.Ctx) error {
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
 
