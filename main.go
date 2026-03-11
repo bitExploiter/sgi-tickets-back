@@ -17,10 +17,9 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error cargando archivo .env")
-	}
+	// Cargar .env si existe (opcional, para desarrollo local)
+	// En Docker las variables vienen del docker-compose.yml
+	_ = godotenv.Load()
 
 	storage.DBConnection()
 
