@@ -796,12 +796,12 @@ const docTemplate = `{
     "securityDefinitions": {
         "CookieAuth": {
             "type": "apiKey",
-            "name": "sgi_user_email",
+            "name": "sgi_tickets_user_email",
             "in": "cookie"
         },
         "TwoFactorAuth": {
             "type": "apiKey",
-            "name": "sgi_identity",
+            "name": "sgi_tickets_identity",
             "in": "cookie"
         }
     }
@@ -814,7 +814,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{"http", "https"},
 	Title:            "SGI Tickets API",
-	Description:      "API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura\n\n**Autenticación**: Sistema basado en cookies con 2FA\n- Cookie `sgi_user_email`: Sesión de usuario\n- Cookie `sgi_identity`: Verificación 2FA\n\n**Roles disponibles**: admin, supervisor, agente, entidad, contratista",
+	Description:      "API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura\n\n**Autenticación**: Sistema basado en cookies con 2FA\n- Cookie `sgi_tickets_user_email`: Sesión de usuario\n- Cookie `sgi_tickets_identity`: Verificación 2FA\n\n**Roles disponibles**: admin, supervisor, agente, entidad, contratista",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

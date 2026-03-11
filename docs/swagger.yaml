@@ -92,8 +92,8 @@ info:
     API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura
 
     **Autenticación**: Sistema basado en cookies con 2FA
-    - Cookie `sgi_user_email`: Sesión de usuario
-    - Cookie `sgi_identity`: Verificación 2FA
+    - Cookie `sgi_tickets_user_email`: Sesión de usuario
+    - Cookie `sgi_tickets_identity`: Verificación 2FA
 
     **Roles disponibles**: admin, supervisor, agente, entidad, contratista
   title: SGI Tickets API
@@ -530,10 +530,10 @@ schemes:
 securityDefinitions:
   CookieAuth:
     in: cookie
-    name: sgi_user_email
+    name: sgi_tickets_user_email
     type: apiKey
   TwoFactorAuth:
     in: cookie
-    name: sgi_identity
+    name: sgi_tickets_identity
     type: apiKey
 swagger: "2.0"

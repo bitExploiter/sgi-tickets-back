@@ -11,7 +11,7 @@ import (
 
 func CookieMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		cookie := c.Cookies("sgi_user_email")
+		cookie := c.Cookies("sgi_tickets_user_email")
 		if cookie == "" {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "No tienes permisos para acceder a este recurso",
@@ -29,7 +29,7 @@ func CookieMiddleware() fiber.Handler {
 
 func TwoFaMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		cookie := c.Cookies("sgi_identity")
+		cookie := c.Cookies("sgi_tickets_identity")
 		if cookie == "" {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"success": false,

@@ -101,7 +101,7 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// 6. Generar cookie de sesión básica (sgi_user_email)
+	// 6. Generar cookie de sesión básica (sgi_tickets_user_email)
 	sessionToken, err := toolbox.GenerateSessionToken()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -115,7 +115,7 @@ func Login(c *fiber.Ctx) error {
 
 	// Setear cookie HTTP (encriptada por middleware)
 	c.Cookie(&fiber.Cookie{
-		Name:     "sgi_user_email",
+		Name:     "sgi_tickets_user_email",
 		Value:    sessionToken,
 		MaxAge:   86400 * 7, // 7 días
 		HTTPOnly: true,
@@ -137,7 +137,7 @@ func Login(c *fiber.Ctx) error {
 		toolbox.SaveCookieToStorage(identityToken, usuario.Email)
 
 		c.Cookie(&fiber.Cookie{
-			Name:     "sgi_identity",
+			Name:     "sgi_tickets_identity",
 			Value:    identityToken,
 			MaxAge:   86400 * 7,
 			HTTPOnly: true,
@@ -272,7 +272,7 @@ func Setup2FA(c *fiber.Ctx) error {
 		toolbox.SaveCookieToStorage(identityToken, usuario.Email)
 
 		c.Cookie(&fiber.Cookie{
-			Name:     "sgi_identity",
+			Name:     "sgi_tickets_identity",
 			Value:    identityToken,
 			MaxAge:   86400 * 7,
 			HTTPOnly: true,
@@ -364,7 +364,7 @@ func Verify2FA(c *fiber.Ctx) error {
 	toolbox.SaveCookieToStorage(identityToken, usuario.Email)
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "sgi_identity",
+		Name:     "sgi_tickets_identity",
 		Value:    identityToken,
 		MaxAge:   86400 * 7, // 7 días
 		HTTPOnly: true,
@@ -399,8 +399,8 @@ func Logout(c *fiber.Ctx) error {
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
 
 	// Obtener tokens de las cookies
-	emailToken := c.Cookies("sgi_user_email")
-	identityToken := c.Cookies("sgi_identity")
+	emailToken := c.Cookies("sgi_tickets_user_email")
+	identityToken := c.Cookies("sgi_tickets_identity")
 
 	// Deshabilitar cookies en BD
 	if emailToken != "" {
@@ -412,14 +412,14 @@ func Logout(c *fiber.Ctx) error {
 
 	// Limpiar cookies del navegador
 	c.Cookie(&fiber.Cookie{
-		Name:     "sgi_user_email",
+		Name:     "sgi_tickets_user_email",
 		Value:    "",
 		MaxAge:   -1,
 		HTTPOnly: true,
 	})
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "sgi_identity",
+		Name:     "sgi_tickets_identity",
 		Value:    "",
 		MaxAge:   -1,
 		HTTPOnly: true,

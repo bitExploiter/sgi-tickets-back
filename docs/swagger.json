@@ -5,7 +5,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura\n\n**Autenticación**: Sistema basado en cookies con 2FA\n- Cookie `sgi_user_email`: Sesión de usuario\n- Cookie `sgi_identity`: Verificación 2FA\n\n**Roles disponibles**: admin, supervisor, agente, entidad, contratista",
+        "description": "API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura\n\n**Autenticación**: Sistema basado en cookies con 2FA\n- Cookie `sgi_tickets_user_email`: Sesión de usuario\n- Cookie `sgi_tickets_identity`: Verificación 2FA\n\n**Roles disponibles**: admin, supervisor, agente, entidad, contratista",
         "title": "SGI Tickets API",
         "contact": {
             "name": "Soporte Técnico SGI",
@@ -794,12 +794,12 @@
     "securityDefinitions": {
         "CookieAuth": {
             "type": "apiKey",
-            "name": "sgi_user_email",
+            "name": "sgi_tickets_user_email",
             "in": "cookie"
         },
         "TwoFactorAuth": {
             "type": "apiKey",
-            "name": "sgi_identity",
+            "name": "sgi_tickets_identity",
             "in": "cookie"
         }
     }

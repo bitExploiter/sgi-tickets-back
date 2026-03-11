@@ -24,8 +24,8 @@ import (
 // @description API REST para Sistema de Gestión de Interventorías - Gestión de tickets de infraestructura
 // @description
 // @description **Autenticación**: Sistema basado en cookies con 2FA
-// @description - Cookie `sgi_user_email`: Sesión de usuario
-// @description - Cookie `sgi_identity`: Verificación 2FA
+// @description - Cookie `sgi_tickets_user_email`: Sesión de usuario
+// @description - Cookie `sgi_tickets_identity`: Verificación 2FA
 // @description
 // @description **Roles disponibles**: admin, supervisor, agente, entidad, contratista
 // @contact.name Soporte Técnico SGI
@@ -35,10 +35,10 @@ import (
 // @schemes http https
 // @securityDefinitions.apikey CookieAuth
 // @in cookie
-// @name sgi_user_email
+// @name sgi_tickets_user_email
 // @securityDefinitions.apikey TwoFactorAuth
 // @in cookie
-// @name sgi_identity
+// @name sgi_tickets_identity
 
 func main() {
 	// Cargar .env si existe (opcional, para desarrollo local)
@@ -107,13 +107,13 @@ func main() {
 	authRoutes.Post("/recover", handlers.RecoverPassword)
 	authRoutes.Post("/reset", handlers.ResetPassword)
 
-	// Setup y verificación 2FA (requieren cookie sgi_user_email)
+	// Setup y verificación 2FA (requieren cookie sgi_tickets_user_email)
 	auth2faRoutes := authRoutes.Group("/2fa", handlers.CookieMiddleware())
 	auth2faRoutes.Get("/setup", handlers.Setup2FA)
 	auth2faRoutes.Post("/setup", handlers.Setup2FA)
 	auth2faRoutes.Post("/verify", handlers.Verify2FA)
 
-	// Logout (requiere cookie sgi_user_email)
+	// Logout (requiere cookie sgi_tickets_user_email)
 	authRoutes.Post("/logout", handlers.CookieMiddleware(), handlers.Logout)
 
 	// ==========================================
