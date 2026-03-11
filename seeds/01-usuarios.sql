@@ -34,12 +34,12 @@ INSERT INTO tickets_usuarios (
 ) VALUES
 -- ========== ADMIN ==========
 (
-    'Juan Carlos',
-    'Admin Prueba',
+    'Alvaro Andres',
+    'Alvarez Rodriguez',
     'CC',
-    '1234567890',
-    'admin@sgi.gov.co',
-    '3001234567',
+    '1117529658',
+    'aaar529658@gmail.com',
+    '3014593654',
     'Bogotá',
     'Bogotá D.C.',
     '$2a$12$Dfgh.Uq8Ig.8Yal3YMRR9eGm5JYEjbSpSyIaXu5xM6hJ8Kk0bBgua',
@@ -49,7 +49,22 @@ INSERT INTO tickets_usuarios (
     NOW(),
     NOW()
 ),
-
+(
+    'Juan Camilo',
+    'Puentes',
+    'CC',
+    '1234567890',
+    'jcpsandoval94@gmail.com',
+    '3134212476',
+    'Bogotá',
+    'Bogotá D.C.',
+    '$2a$12$Dfgh.Uq8Ig.8Yal3YMRR9eGm5JYEjbSpSyIaXu5xM6hJ8Kk0bBgua',
+    'admin',
+    'seeder',
+    true,
+    NOW(),
+    NOW()
+),
 -- ========== SUPERVISOR ==========
 (
     'María Fernanda',

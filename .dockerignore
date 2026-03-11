@@ -36,8 +36,8 @@ vendor/
 !README.md
 *.plantuml
 
-# Seeds (no necesarios en producción)
-seeds/
+# Seeds - INCLUIDOS para ejecutar automáticamente en contenedor
+# seeds/
 
 # Scripts auxiliares
 scripts/

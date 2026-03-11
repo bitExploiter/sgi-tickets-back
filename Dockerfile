@@ -1,4 +1,4 @@
-FROM golang:1.24.0-bullseye as builder
+FROM golang:1.24.0-bullseye AS builder
 
 WORKDIR /app
 
@@ -17,15 +17,23 @@ FROM debian:bullseye-slim
 
 WORKDIR /app
 
+# Instalar postgresql-client para ejecutar seeders
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
 # Copiar directorios necesarios
 COPY templates ./templates
 COPY public ./public
+COPY seeds ./seeds
 
 # Crear directorio para archivos subidos (con permisos)
 RUN mkdir -p ./files && chmod 755 ./files
 
 # Copiar binario compilado
 COPY --from=builder /app/main .
+
+# Copiar script de entrypoint
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
 
 # NOTA: El .env se debe pasar vía variables de entorno (docker-compose)
 # o montar como volumen. Para producción standalone, crear .env-produccion
@@ -34,4 +42,4 @@ COPY --from=builder /app/main .
 
 EXPOSE 8080
 
-CMD ["./main"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
