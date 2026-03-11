@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sgi-tickets-db
+    environment:
+      POSTGRES_DB: sgi2_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: abcd.1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sgi-tickets-back
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=abcd.1234
+      - DB_NAME=sgi2_db
+      - BASE_URL=http://localhost:8080/
+      - SERVER_PORT=8080
+      - SECRET_KEY=bG6HPDJ/90kS7TOaTKUCXDc2aCSFcoYiJOqoF2Jamlk=
+      - MAIL_SERVER_HOST=smtp.gmail.com
+      - MAIL_SERVER_PORT=587
+      - MAIL_SERVER_USER=interventoriasgisve@gmail.com
+      - MAIL_SERVER_PASSWORD=wyaujrrmhsorsupi
+      - MAIL_SERVER_FROM=test@gmail.com
+      - FILE_STORAGE=./files
+      - PDF_TMP_STORAGE=./pdf-tmp-storage/
+    volumes:
+      - ./files:/app/files
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

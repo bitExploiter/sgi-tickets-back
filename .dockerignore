@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Archivos de desarrollo
+.env
+.env.local
+.env.development
+.air.toml
+tmp/
+
+# Binarios y builds locales
+sgi-tickets-back
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Archivos temporales
+files/*
+!files/.gitkeep
+pdf-tmp-storage/
+
+# Dependencias (se descargan en el build)
+vendor/
+
+# IDE y sistema
+.vscode/
+.idea/
+.DS_Store
+.claude/
+
+# Documentación y plantuml
+*.md
+!README.md
+*.plantuml
+
+# Seeds (no necesarios en producción)
+seeds/
+
+# Scripts auxiliares
+scripts/
