@@ -3,6 +3,7 @@ package handlers
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"os"
 	"time"
 
 	"sgi-tickets-back/models"
@@ -488,7 +489,11 @@ func RecoverPassword(c *fiber.Ctx) error {
 		})
 
 		// 6. Enviar email con el token
-		resetURL := "http://localhost:5173/reset-password?token=" + tokenPlain
+		frontendURL := os.Getenv("FRONTEND_URL")
+		if frontendURL == "" {
+			frontendURL = "http://localhost:3000"
+		}
+		resetURL := frontendURL + "/reset-password?token=" + tokenPlain
 
 		emailData := fiber.Map{
 			"nombre":    usuario.Nombres + " " + usuario.Apellidos,
