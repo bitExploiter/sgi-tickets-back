@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/ap
 COPY templates ./templates
 COPY public ./public
 COPY seeds ./seeds
+COPY docs ./docs
 
 # Crear directorio para archivos subidos (con permisos)
 RUN mkdir -p ./files && chmod 755 ./files
