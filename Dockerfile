@@ -17,8 +17,8 @@ FROM debian:bullseye-slim
 
 WORKDIR /app
 
-# Instalar postgresql-client para ejecutar seeders
-RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+# Instalar postgresql-client y certificados raíz para TLS (ca-certificates)
+RUN apt-get update && apt-get install -y postgresql-client ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Copiar directorios necesarios
 COPY templates ./templates
