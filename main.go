@@ -127,5 +127,16 @@ func main() {
 	perfilRoutes.Post("/2fa/activar", handlers.Activar2FA)
 	perfilRoutes.Post("/2fa/desactivar", handlers.Desactivar2FA)
 
+	// ==========================================
+	// RUTAS DE USUARIOS
+	// ==========================================
+	usuariosRoutes := v1.Group("/usuarios", handlers.TwoFaMiddleware())
+	usuariosRoutes.Get("/", handlers.ListarUsuarios)
+	usuariosRoutes.Get("/:id", handlers.ObtenerUsuario)
+	usuariosRoutes.Post("/", handlers.CrearUsuario)
+	usuariosRoutes.Put("/:id", handlers.ActualizarUsuario)
+	usuariosRoutes.Delete("/:id", handlers.EliminarUsuario)
+	usuariosRoutes.Post("/:id/reset-password", handlers.ResetearPasswordUsuario)
+
 	log.Fatal(app.Listen(":" + os.Getenv("SERVER_PORT")))
 }
