@@ -138,5 +138,12 @@ func main() {
 	usuariosRoutes.Delete("/:id", handlers.EliminarUsuario)
 	usuariosRoutes.Post("/:id/reset-password", handlers.ResetearPasswordUsuario)
 
+	// ==========================================
+	// RUTAS DE CATALOGOS
+	// ==========================================
+	catalogosRoutes := v1.Group("/catalogos", handlers.TwoFaMiddleware())
+	catalogosRoutes.Get("/tipos-documento", handlers.GetTiposDocumentosIdentificacion)
+	catalogosRoutes.Get("/regionales", handlers.GetRegionales)
+
 	log.Fatal(app.Listen(":" + os.Getenv("SERVER_PORT")))
 }
