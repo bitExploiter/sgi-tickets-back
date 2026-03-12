@@ -146,6 +146,8 @@ func Login(c *fiber.Ctx) error {
 			SameSite: "Strict",
 		})
 
+		storage.DB.Model(&usuario).Update("ultima_fecha_conexion", time.Now())
+
 		return c.JSON(fiber.Map{
 			"success":     true,
 			"require_2fa": false,
@@ -281,6 +283,8 @@ func Setup2FA(c *fiber.Ctx) error {
 			SameSite: "Strict",
 		})
 
+		storage.DB.Model(&usuario).Update("ultima_fecha_conexion", time.Now())
+
 		toolbox.SaveLoggerAction(usuario, "Auth", "2fa_configurado", c.IP())
 
 		return c.JSON(fiber.Map{
@@ -372,6 +376,8 @@ func Verify2FA(c *fiber.Ctx) error {
 		Secure:   false, // true en producción
 		SameSite: "Strict",
 	})
+
+	storage.DB.Model(&usuario).Update("ultima_fecha_conexion", time.Now())
 
 	// Log de 2FA exitoso
 	toolbox.SaveLoggerAction(usuario, "Auth", "2fa_exitoso", c.IP())

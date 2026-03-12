@@ -15,6 +15,7 @@ func getMigrations() []*gormigrate.Migration {
 		migration20250309_0002,
 		migration20250310_0003,
 		migration20250310_0004,
+		migration20260312_0005,
 		// Futuras migraciones se agregan aqui
 	}
 }
