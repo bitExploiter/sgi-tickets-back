@@ -18,6 +18,34 @@ definitions:
     - nueva_password
     - password_actual
     type: object
+  handlers.CreateUsuarioRequest:
+    properties:
+      apellidos:
+        type: string
+      dependencia_id:
+        type: integer
+      email:
+        type: string
+      municipio:
+        type: string
+      nombres:
+        type: string
+      numero_documento:
+        type: string
+      regional:
+        type: string
+      rol:
+        type: string
+      telefono:
+        type: string
+      tipo_documento:
+        type: string
+    required:
+    - apellidos
+    - email
+    - nombres
+    - rol
+    type: object
   handlers.Desactivar2FARequest:
     properties:
       password:
@@ -75,6 +103,33 @@ definitions:
     required:
     - apellidos
     - nombres
+    type: object
+  handlers.UpdateUsuarioRequest:
+    properties:
+      activo:
+        type: boolean
+      apellidos:
+        type: string
+      dependencia_id:
+        type: integer
+      municipio:
+        type: string
+      nombres:
+        type: string
+      numero_documento:
+        type: string
+      regional:
+        type: string
+      rol:
+        type: string
+      telefono:
+        type: string
+      tipo_documento:
+        type: string
+    required:
+    - apellidos
+    - nombres
+    - rol
     type: object
   handlers.Verify2FARequest:
     properties:
@@ -524,6 +579,213 @@ paths:
       summary: Cambiar contraseña del usuario autenticado
       tags:
       - Perfil
+  /usuarios:
+    get:
+      description: Obtiene un listado paginado de usuarios del sistema con opciones
+        de filtrado por búsqueda, rol, estado y regional
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        name: page_size
+        type: integer
+      - description: Búsqueda por nombre, apellido o email
+        in: query
+        name: search
+        type: string
+      - description: Filtrar por rol (admin, supervisor, agente, entidad, contratista)
+        in: query
+        name: rol
+        type: string
+      - description: Filtrar por estado (activo, inactivo)
+        in: query
+        name: estado
+        type: string
+      - description: Filtrar por regional
+        in: query
+        name: regional
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista paginada de usuarios
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Listar usuarios con paginación y filtros
+      tags:
+      - Usuarios
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo usuario en el sistema. Se genera una contraseña aleatoria
+        y se envía por email
+      parameters:
+      - description: Datos del nuevo usuario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateUsuarioRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuario creado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos o email duplicado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Crear un nuevo usuario
+      tags:
+      - Usuarios
+  /usuarios/{id}:
+    delete:
+      description: Elimina lógicamente un usuario del sistema. El usuario no se borra
+        físicamente, solo se marca como eliminado
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario eliminado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Usuario no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Eliminar un usuario (soft delete)
+      tags:
+      - Usuarios
+    get:
+      description: Obtiene los datos completos de un usuario específico por su ID
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Datos del usuario
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Usuario no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Obtener un usuario por ID
+      tags:
+      - Usuarios
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los datos de un usuario existente. No permite actualizar
+        el email ni la contraseña
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateUsuarioRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario actualizado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Usuario no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Actualizar un usuario
+      tags:
+      - Usuarios
+  /usuarios/{id}/reset-password:
+    post:
+      description: Genera un nuevo token de recuperación y envía un email al usuario
+        con el enlace para restablecer su contraseña
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Email de recuperación enviado
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Usuario no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - CookieAuth: []
+      - TwoFactorAuth: []
+      summary: Resetear contraseña de un usuario
+      tags:
+      - Usuarios
 schemes:
 - http
 - https

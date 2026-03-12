@@ -663,6 +663,325 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/usuarios": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Obtiene un listado paginado de usuarios del sistema con opciones de filtrado por búsqueda, rol, estado y regional",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Listar usuarios con paginación y filtros",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número de página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Tamaño de página",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Búsqueda por nombre, apellido o email",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por rol (admin, supervisor, agente, entidad, contratista)",
+                        "name": "rol",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por estado (activo, inactivo)",
+                        "name": "estado",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por regional",
+                        "name": "regional",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de usuarios",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Crea un nuevo usuario en el sistema. Se genera una contraseña aleatoria y se envía por email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Crear un nuevo usuario",
+                "parameters": [
+                    {
+                        "description": "Datos del nuevo usuario",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateUsuarioRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Usuario creado exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos o email duplicado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Obtiene los datos completos de un usuario específico por su ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Obtener un usuario por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos del usuario",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Actualiza los datos de un usuario existente. No permite actualizar el email ni la contraseña",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Actualizar un usuario",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos a actualizar",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateUsuarioRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuario actualizado exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Elimina lógicamente un usuario del sistema. El usuario no se borra físicamente, solo se marca como eliminado",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Eliminar un usuario (soft delete)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuario eliminado exitosamente",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios/{id}/reset-password": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    },
+                    {
+                        "TwoFactorAuth": []
+                    }
+                ],
+                "description": "Genera un nuevo token de recuperación y envía un email al usuario con el enlace para restablecer su contraseña",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Resetear contraseña de un usuario",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email de recuperación enviado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -689,6 +1008,47 @@ const docTemplate = `{
                     "minLength": 8
                 },
                 "password_actual": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.CreateUsuarioRequest": {
+            "type": "object",
+            "required": [
+                "apellidos",
+                "email",
+                "nombres",
+                "rol"
+            ],
+            "properties": {
+                "apellidos": {
+                    "type": "string"
+                },
+                "dependencia_id": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "municipio": {
+                    "type": "string"
+                },
+                "nombres": {
+                    "type": "string"
+                },
+                "numero_documento": {
+                    "type": "string"
+                },
+                "regional": {
+                    "type": "string"
+                },
+                "rol": {
+                    "type": "string"
+                },
+                "telefono": {
+                    "type": "string"
+                },
+                "tipo_documento": {
                     "type": "string"
                 }
             }
@@ -771,6 +1131,46 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "numero_documento": {
+                    "type": "string"
+                },
+                "telefono": {
+                    "type": "string"
+                },
+                "tipo_documento": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.UpdateUsuarioRequest": {
+            "type": "object",
+            "required": [
+                "apellidos",
+                "nombres",
+                "rol"
+            ],
+            "properties": {
+                "activo": {
+                    "type": "boolean"
+                },
+                "apellidos": {
+                    "type": "string"
+                },
+                "dependencia_id": {
+                    "type": "integer"
+                },
+                "municipio": {
+                    "type": "string"
+                },
+                "nombres": {
+                    "type": "string"
+                },
+                "numero_documento": {
+                    "type": "string"
+                },
+                "regional": {
+                    "type": "string"
+                },
+                "rol": {
                     "type": "string"
                 },
                 "telefono": {
