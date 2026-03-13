@@ -16,12 +16,13 @@ import (
 type CreateUsuarioRequest struct {
 	Nombres         string `json:"nombres" validate:"required"`
 	Apellidos       string `json:"apellidos" validate:"required"`
-	TipoDocumento   string `json:"tipo_documento" validate:"-"`
+	TipoDocumentoID *uint  `json:"tipo_documento_id" validate:"-"`
 	NumeroDocumento string `json:"numero_documento" validate:"-"`
 	Email           string `json:"email" validate:"required,email"`
 	Telefono        string `json:"telefono" validate:"-"`
-	Regional        string `json:"regional" validate:"-"`
-	Municipio       string `json:"municipio" validate:"-"`
+	RegionalID      *uint  `json:"regional_id" validate:"-"`
+	DepartamentoID  *uint  `json:"departamento_id" validate:"-"`
+	MunicipioID     *uint  `json:"municipio_id" validate:"-"`
 	Rol             string `json:"rol" validate:"required"`
 	DependenciaID   *uint  `json:"dependencia_id" validate:"-"`
 }
@@ -29,14 +30,36 @@ type CreateUsuarioRequest struct {
 type UpdateUsuarioRequest struct {
 	Nombres         string `json:"nombres" validate:"required"`
 	Apellidos       string `json:"apellidos" validate:"required"`
-	TipoDocumento   string `json:"tipo_documento" validate:"-"`
+	TipoDocumentoID *uint  `json:"tipo_documento_id" validate:"-"`
 	NumeroDocumento string `json:"numero_documento" validate:"-"`
 	Telefono        string `json:"telefono" validate:"-"`
-	Regional        string `json:"regional" validate:"-"`
-	Municipio       string `json:"municipio" validate:"-"`
+	RegionalID      *uint  `json:"regional_id" validate:"-"`
+	DepartamentoID  *uint  `json:"departamento_id" validate:"-"`
+	MunicipioID     *uint  `json:"municipio_id" validate:"-"`
 	Rol             string `json:"rol" validate:"required"`
 	DependenciaID   *uint  `json:"dependencia_id" validate:"-"`
 	Activo          *bool  `json:"activo" validate:"-"`
+}
+
+func getRegionalNombre(usuario models.TicketUsuario) string {
+	if usuario.RegionalRef != nil {
+		return usuario.RegionalRef.Nombre
+	}
+	return ""
+}
+
+func getTipoDocumentoNombre(usuario models.TicketUsuario) string {
+	if usuario.TipoDocumentoRef != nil {
+		return usuario.TipoDocumentoRef.Nombre
+	}
+	return ""
+}
+
+func getMunicipioNombre(usuario models.TicketUsuario) string {
+	if usuario.MunicipioRef != nil {
+		return usuario.MunicipioRef.Nombre
+	}
+	return ""
 }
 
 // ListarUsuarios godoc
@@ -62,20 +85,26 @@ func ListarUsuarios(c *fiber.Ctx) error {
 	rol := c.Query("rol", "")
 	estado := c.Query("estado", "")
 	regional := c.Query("regional", "")
+	regionalIDParam := c.Query("regional_id", "")
 
 	offset := (page - 1) * pageSize
 
 	// Query base
-	query := storage.DB.Model(&models.TicketUsuario{}).Preload("Dependencia")
+	query := storage.DB.Model(&models.TicketUsuario{}).
+		Preload("Dependencia").
+		Preload("TipoDocumentoRef").
+		Preload("RegionalRef").
+		Preload("DepartamentoRef").
+		Preload("MunicipioRef")
 
 	// Aplicar filtro de búsqueda (nombre, apellido, email, ID)
 	if search != "" {
 		// Intentar convertir a ID si es numérico
 		if id, err := strconv.Atoi(search); err == nil {
-			query = query.Where("id = ?", id)
+			query = query.Where("tickets_usuarios.id = ?", id)
 		} else {
 			query = query.Where(
-				"LOWER(nombres) LIKE ? OR LOWER(apellidos) LIKE ? OR LOWER(email) LIKE ?",
+				"LOWER(tickets_usuarios.nombres) LIKE ? OR LOWER(tickets_usuarios.apellidos) LIKE ? OR LOWER(tickets_usuarios.email) LIKE ?",
 				"%"+strings.ToLower(search)+"%",
 				"%"+strings.ToLower(search)+"%",
 				"%"+strings.ToLower(search)+"%",
@@ -85,21 +114,30 @@ func ListarUsuarios(c *fiber.Ctx) error {
 
 	// Aplicar filtro de rol
 	if rol != "" && rol != "todos" {
-		query = query.Where("rol = ?", rol)
+		query = query.Where("tickets_usuarios.rol = ?", rol)
 	}
 
 	// Aplicar filtro de estado (activo/inactivo)
 	if estado != "" && estado != "todos" {
 		if estado == "activo" {
-			query = query.Where("activo = ?", true)
+			query = query.Where("tickets_usuarios.activo = ?", true)
 		} else if estado == "inactivo" {
-			query = query.Where("activo = ?", false)
+			query = query.Where("tickets_usuarios.activo = ?", false)
 		}
 	}
 
 	// Aplicar filtro de regional
-	if regional != "" && regional != "todas" {
-		query = query.Where("regional = ?", regional)
+	if regionalIDParam != "" {
+		regionalID, err := strconv.Atoi(regionalIDParam)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"success": false,
+				"error":   "regional_id invalido",
+			})
+		}
+		query = query.Where("tickets_usuarios.regional_id = ?", regionalID)
+	} else if regional != "" && regional != "todas" {
+		query = query.Joins("LEFT JOIN regionales r ON r.id = tickets_usuarios.regional_id").Where("LOWER(r.nombre) = ?", strings.ToLower(regional))
 	}
 
 	// Contar total de registros
@@ -117,13 +155,17 @@ func ListarUsuarios(c *fiber.Ctx) error {
 			"id":                    usuario.Id,
 			"nombres":               usuario.Nombres,
 			"apellidos":             usuario.Apellidos,
-			"tipo_documento":        usuario.TipoDocumento,
+			"tipo_documento":        getTipoDocumentoNombre(usuario),
+			"tipo_documento_id":     usuario.TipoDocumentoID,
 			"numero_documento":      usuario.NumeroDocumento,
 			"email":                 usuario.Email,
 			"telefono":              usuario.Telefono,
 			"rol":                   usuario.Rol,
-			"regional":              usuario.Regional,
-			"municipio":             usuario.Municipio,
+			"regional":              getRegionalNombre(usuario),
+			"regional_id":           usuario.RegionalID,
+			"departamento_id":       usuario.DepartamentoID,
+			"municipio":             getMunicipioNombre(usuario),
+			"municipio_id":          usuario.MunicipioID,
 			"origen":                usuario.Origen,
 			"dependencia_id":        usuario.DependenciaID,
 			"dependencia":           usuario.Dependencia,
@@ -161,7 +203,13 @@ func ObtenerUsuario(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	var usuario models.TicketUsuario
-	result := storage.DB.Preload("Dependencia").First(&usuario, id)
+	result := storage.DB.
+		Preload("Dependencia").
+		Preload("TipoDocumentoRef").
+		Preload("RegionalRef").
+		Preload("DepartamentoRef").
+		Preload("MunicipioRef").
+		First(&usuario, id)
 
 	if result.Error != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -176,13 +224,17 @@ func ObtenerUsuario(c *fiber.Ctx) error {
 			"id":                    usuario.Id,
 			"nombres":               usuario.Nombres,
 			"apellidos":             usuario.Apellidos,
-			"tipo_documento":        usuario.TipoDocumento,
+			"tipo_documento":        getTipoDocumentoNombre(usuario),
+			"tipo_documento_id":     usuario.TipoDocumentoID,
 			"numero_documento":      usuario.NumeroDocumento,
 			"email":                 usuario.Email,
 			"telefono":              usuario.Telefono,
 			"rol":                   usuario.Rol,
-			"regional":              usuario.Regional,
-			"municipio":             usuario.Municipio,
+			"regional":              getRegionalNombre(usuario),
+			"regional_id":           usuario.RegionalID,
+			"departamento_id":       usuario.DepartamentoID,
+			"municipio":             getMunicipioNombre(usuario),
+			"municipio_id":          usuario.MunicipioID,
 			"origen":                usuario.Origen,
 			"dependencia_id":        usuario.DependenciaID,
 			"dependencia":           usuario.Dependencia,
@@ -250,12 +302,13 @@ func CrearUsuario(c *fiber.Ctx) error {
 	usuario := models.TicketUsuario{
 		Nombres:         request.Nombres,
 		Apellidos:       request.Apellidos,
-		TipoDocumento:   request.TipoDocumento,
+		TipoDocumentoID: request.TipoDocumentoID,
 		NumeroDocumento: request.NumeroDocumento,
 		Email:           request.Email,
 		Telefono:        request.Telefono,
-		Regional:        request.Regional,
-		Municipio:       request.Municipio,
+		RegionalID:      request.RegionalID,
+		DepartamentoID:  request.DepartamentoID,
+		MunicipioID:     request.MunicipioID,
 		Password:        hashedPassword,
 		Rol:             request.Rol,
 		Origen:          "local",
@@ -295,7 +348,13 @@ func CrearUsuario(c *fiber.Ctx) error {
 	toolbox.SaveLoggerAction(currentUser, "Usuario", fmt.Sprintf("crear_usuario_%d", usuario.Id), c.IP())
 
 	// 8. Recargar usuario con dependencia
-	storage.DB.Preload("Dependencia").First(&usuario, usuario.Id)
+	storage.DB.
+		Preload("Dependencia").
+		Preload("TipoDocumentoRef").
+		Preload("RegionalRef").
+		Preload("DepartamentoRef").
+		Preload("MunicipioRef").
+		First(&usuario, usuario.Id)
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
@@ -303,13 +362,17 @@ func CrearUsuario(c *fiber.Ctx) error {
 			"id":                    usuario.Id,
 			"nombres":               usuario.Nombres,
 			"apellidos":             usuario.Apellidos,
-			"tipo_documento":        usuario.TipoDocumento,
+			"tipo_documento":        getTipoDocumentoNombre(usuario),
+			"tipo_documento_id":     usuario.TipoDocumentoID,
 			"numero_documento":      usuario.NumeroDocumento,
 			"email":                 usuario.Email,
 			"telefono":              usuario.Telefono,
 			"rol":                   usuario.Rol,
-			"regional":              usuario.Regional,
-			"municipio":             usuario.Municipio,
+			"regional":              getRegionalNombre(usuario),
+			"regional_id":           usuario.RegionalID,
+			"departamento_id":       usuario.DepartamentoID,
+			"municipio":             getMunicipioNombre(usuario),
+			"municipio_id":          usuario.MunicipioID,
 			"dependencia_id":        usuario.DependenciaID,
 			"dependencia":           usuario.Dependencia,
 			"activo":                usuario.Activo,
@@ -367,15 +430,16 @@ func ActualizarUsuario(c *fiber.Ctx) error {
 
 	// 4. Actualizar campos permitidos
 	updates := map[string]interface{}{
-		"nombres":          request.Nombres,
-		"apellidos":        request.Apellidos,
-		"tipo_documento":   request.TipoDocumento,
-		"numero_documento": request.NumeroDocumento,
-		"telefono":         request.Telefono,
-		"regional":         request.Regional,
-		"municipio":        request.Municipio,
-		"rol":              request.Rol,
-		"dependencia_id":   request.DependenciaID,
+		"nombres":           request.Nombres,
+		"apellidos":         request.Apellidos,
+		"tipo_documento_id": request.TipoDocumentoID,
+		"numero_documento":  request.NumeroDocumento,
+		"telefono":          request.Telefono,
+		"regional_id":       request.RegionalID,
+		"departamento_id":   request.DepartamentoID,
+		"municipio_id":      request.MunicipioID,
+		"rol":               request.Rol,
+		"dependencia_id":    request.DependenciaID,
 	}
 
 	// Actualizar estado si se proporciona
@@ -389,7 +453,13 @@ func ActualizarUsuario(c *fiber.Ctx) error {
 	toolbox.SaveLoggerAction(currentUser, "Usuario", fmt.Sprintf("actualizar_usuario_%s", id), c.IP())
 
 	// 6. Recargar usuario actualizado
-	storage.DB.Preload("Dependencia").First(&usuario, id)
+	storage.DB.
+		Preload("Dependencia").
+		Preload("TipoDocumentoRef").
+		Preload("RegionalRef").
+		Preload("DepartamentoRef").
+		Preload("MunicipioRef").
+		First(&usuario, id)
 
 	return c.JSON(fiber.Map{
 		"success": true,
@@ -397,13 +467,17 @@ func ActualizarUsuario(c *fiber.Ctx) error {
 			"id":                    usuario.Id,
 			"nombres":               usuario.Nombres,
 			"apellidos":             usuario.Apellidos,
-			"tipo_documento":        usuario.TipoDocumento,
+			"tipo_documento":        getTipoDocumentoNombre(usuario),
+			"tipo_documento_id":     usuario.TipoDocumentoID,
 			"numero_documento":      usuario.NumeroDocumento,
 			"email":                 usuario.Email,
 			"telefono":              usuario.Telefono,
 			"rol":                   usuario.Rol,
-			"regional":              usuario.Regional,
-			"municipio":             usuario.Municipio,
+			"regional":              getRegionalNombre(usuario),
+			"regional_id":           usuario.RegionalID,
+			"departamento_id":       usuario.DepartamentoID,
+			"municipio":             getMunicipioNombre(usuario),
+			"municipio_id":          usuario.MunicipioID,
 			"dependencia_id":        usuario.DependenciaID,
 			"dependencia":           usuario.Dependencia,
 			"activo":                usuario.Activo,

@@ -16,6 +16,8 @@ func getMigrations() []*gormigrate.Migration {
 		migration20250310_0003,
 		migration20250310_0004,
 		migration20260312_0005,
+		migration20260313_0006,
+		migration20260313_0007,
 		// Futuras migraciones se agregan aqui
 	}
 }
@@ -28,6 +30,10 @@ func RunMigrations(db *gorm.DB) error {
 	// y la BD esta vacia — crea todo el esquema de una vez
 	m.InitSchema(func(tx *gorm.DB) error {
 		return tx.AutoMigrate(
+			&models.TicketDepartamento{},
+			&models.TicketMunicipio{},
+			&models.TicketTipoDocumento{},
+			&models.TicketRegional{},
 			// Catalogos
 			&models.TicketDependencia{},
 			&models.TicketSubdependencia{},

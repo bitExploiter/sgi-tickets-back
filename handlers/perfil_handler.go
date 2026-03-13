@@ -12,7 +12,6 @@ import (
 type UpdatePerfilRequest struct {
 	Nombres         string `json:"nombres" validate:"required"`
 	Apellidos       string `json:"apellidos" validate:"required"`
-	TipoDocumento   string `json:"tipo_documento" validate:"-"`
 	NumeroDocumento string `json:"numero_documento" validate:"-"`
 	Telefono        string `json:"telefono" validate:"-"`
 }
@@ -47,7 +46,28 @@ func GetPerfil(c *fiber.Ctx) error {
 	usuario := c.Locals("CurrentUser").(models.TicketUsuario)
 
 	// Recargar usuario con relación Dependencia
-	storage.DB.Preload("Dependencia").First(&usuario, usuario.Id)
+	storage.DB.
+		Preload("Dependencia").
+		Preload("TipoDocumentoRef").
+		Preload("RegionalRef").
+		Preload("DepartamentoRef").
+		Preload("MunicipioRef").
+		First(&usuario, usuario.Id)
+
+	regionalNombre := ""
+	if usuario.RegionalRef != nil {
+		regionalNombre = usuario.RegionalRef.Nombre
+	}
+
+	municipioNombre := ""
+	if usuario.MunicipioRef != nil {
+		municipioNombre = usuario.MunicipioRef.Nombre
+	}
+
+	tipoDocumentoNombre := ""
+	if usuario.TipoDocumentoRef != nil {
+		tipoDocumentoNombre = usuario.TipoDocumentoRef.Nombre
+	}
 
 	return c.JSON(fiber.Map{
 		"success": true,
@@ -55,13 +75,17 @@ func GetPerfil(c *fiber.Ctx) error {
 			"id":                    usuario.Id,
 			"nombres":               usuario.Nombres,
 			"apellidos":             usuario.Apellidos,
-			"tipo_documento":        usuario.TipoDocumento,
+			"tipo_documento":        tipoDocumentoNombre,
+			"tipo_documento_id":     usuario.TipoDocumentoID,
 			"numero_documento":      usuario.NumeroDocumento,
 			"email":                 usuario.Email,
 			"telefono":              usuario.Telefono,
 			"rol":                   usuario.Rol,
-			"regional":              usuario.Regional,
-			"municipio":             usuario.Municipio,
+			"regional":              regionalNombre,
+			"regional_id":           usuario.RegionalID,
+			"departamento_id":       usuario.DepartamentoID,
+			"municipio":             municipioNombre,
+			"municipio_id":          usuario.MunicipioID,
 			"origen":                usuario.Origen,
 			"dependencia_id":        usuario.DependenciaID,
 			"dependencia":           usuario.Dependencia,
@@ -111,7 +135,6 @@ func UpdatePerfil(c *fiber.Ctx) error {
 	storage.DB.Model(&usuario).Updates(map[string]interface{}{
 		"nombres":          request.Nombres,
 		"apellidos":        request.Apellidos,
-		"tipo_documento":   request.TipoDocumento,
 		"numero_documento": request.NumeroDocumento,
 		"telefono":         request.Telefono,
 	})
@@ -120,7 +143,28 @@ func UpdatePerfil(c *fiber.Ctx) error {
 	toolbox.SaveLoggerAction(usuario, "Perfil", "perfil_actualizado", c.IP())
 
 	// 5. Recargar usuario actualizado
-	storage.DB.Preload("Dependencia").First(&usuario, usuario.Id)
+	storage.DB.
+		Preload("Dependencia").
+		Preload("TipoDocumentoRef").
+		Preload("RegionalRef").
+		Preload("DepartamentoRef").
+		Preload("MunicipioRef").
+		First(&usuario, usuario.Id)
+
+	regionalNombre := ""
+	if usuario.RegionalRef != nil {
+		regionalNombre = usuario.RegionalRef.Nombre
+	}
+
+	municipioNombre := ""
+	if usuario.MunicipioRef != nil {
+		municipioNombre = usuario.MunicipioRef.Nombre
+	}
+
+	tipoDocumentoNombre := ""
+	if usuario.TipoDocumentoRef != nil {
+		tipoDocumentoNombre = usuario.TipoDocumentoRef.Nombre
+	}
 
 	return c.JSON(fiber.Map{
 		"success": true,
@@ -128,13 +172,17 @@ func UpdatePerfil(c *fiber.Ctx) error {
 			"id":                    usuario.Id,
 			"nombres":               usuario.Nombres,
 			"apellidos":             usuario.Apellidos,
-			"tipo_documento":        usuario.TipoDocumento,
+			"tipo_documento":        tipoDocumentoNombre,
+			"tipo_documento_id":     usuario.TipoDocumentoID,
 			"numero_documento":      usuario.NumeroDocumento,
 			"email":                 usuario.Email,
 			"telefono":              usuario.Telefono,
 			"rol":                   usuario.Rol,
-			"regional":              usuario.Regional,
-			"municipio":             usuario.Municipio,
+			"regional":              regionalNombre,
+			"regional_id":           usuario.RegionalID,
+			"departamento_id":       usuario.DepartamentoID,
+			"municipio":             municipioNombre,
+			"municipio_id":          usuario.MunicipioID,
 			"dependencia_id":        usuario.DependenciaID,
 			"dependencia":           usuario.Dependencia,
 			"activo":                usuario.Activo,

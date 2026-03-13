@@ -144,6 +144,8 @@ func main() {
 	catalogosRoutes := v1.Group("/catalogos", handlers.TwoFaMiddleware())
 	catalogosRoutes.Get("/tipos-documento", handlers.GetTiposDocumentosIdentificacion)
 	catalogosRoutes.Get("/regionales", handlers.GetRegionales)
+	catalogosRoutes.Get("/departamentos", handlers.GetDepartamentos)
+	catalogosRoutes.Get("/municipios", handlers.GetMunicipios)
 
 	log.Fatal(app.Listen(":" + os.Getenv("SERVER_PORT")))
 }

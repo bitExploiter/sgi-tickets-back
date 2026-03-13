@@ -3,8 +3,10 @@
 # ==============================================
 # Script para ejecutar seeders SQL
 # ==============================================
-# Lee credenciales del archivo .env y ejecuta
-# todos los archivos .sql en orden numérico
+# Usa variables de entorno existentes o lee credenciales
+# desde .env y ejecuta seeders SQL.
+# Permite ejecutar archivos específicos si se pasan
+# como argumentos.
 # ==============================================
 
 set -e  # Exit on error
@@ -19,35 +21,53 @@ echo -e "${YELLOW}======================================"
 echo -e "🌱 Ejecutando Seeders de Base de Datos"
 echo -e "======================================${NC}\n"
 
-# Verificar que existe .env
-if [ ! -f ".env" ]; then
-    echo -e "${RED}❌ Error: Archivo .env no encontrado${NC}"
-    echo "Por favor crea un archivo .env con las credenciales de la BD"
-    exit 1
+# Cargar variables desde .env solo si no existen en el entorno
+if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_USER" ] || [ -z "$DB_NAME" ]; then
+    if [ -f ".env" ]; then
+        export $(cat .env | grep -v '^#' | xargs)
+    fi
 fi
-
-# Cargar variables del .env
-export $(cat .env | grep -v '^#' | xargs)
 
 # Verificar variables requeridas
 if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_USER" ] || [ -z "$DB_NAME" ]; then
-    echo -e "${RED}❌ Error: Faltan variables de entorno en .env${NC}"
-    echo "Asegúrate de definir: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME"
+    echo -e "${RED}❌ Error: Faltan variables de entorno de BD${NC}"
+    echo "Define: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME (o usa .env)"
     exit 1
 fi
 
 echo -e "🔗 Conectando a: ${GREEN}$DB_USER@$DB_HOST:$DB_PORT/$DB_NAME${NC}\n"
 
-# Contar archivos SQL
-SQL_FILES=$(ls seeds/*.sql 2>/dev/null | wc -l)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Si se pasan argumentos, se ejecutan solo esos archivos.
+if [ "$#" -gt 0 ]; then
+    FILES_TO_RUN=()
+    for arg in "$@"; do
+        if [[ "$arg" = /* ]]; then
+            FILES_TO_RUN+=("$arg")
+        else
+            FILES_TO_RUN+=("$SCRIPT_DIR/$arg")
+        fi
+    done
+else
+    FILES_TO_RUN=("$SCRIPT_DIR"/*.sql)
+fi
+
+# Contar archivos SQL seleccionados
+SQL_FILES=0
+for file in "${FILES_TO_RUN[@]}"; do
+    if [ -f "$file" ]; then
+        SQL_FILES=$((SQL_FILES + 1))
+    fi
+done
 
 if [ "$SQL_FILES" -eq 0 ]; then
-    echo -e "${YELLOW}⚠️  No hay archivos .sql en seeds/${NC}"
+    echo -e "${YELLOW}⚠️  No hay archivos .sql para ejecutar${NC}"
     exit 0
 fi
 
 # Ejecutar cada archivo SQL en orden
-for file in seeds/*.sql; do
+for file in "${FILES_TO_RUN[@]}"; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
         echo -e "📄 Ejecutando: ${GREEN}$filename${NC}"
@@ -59,6 +79,7 @@ for file in seeds/*.sql; do
             -U "$DB_USER" \
             -d "$DB_NAME" \
             -f "$file" \
+            -v ON_ERROR_STOP=1 \
             -q  # Quiet mode
 
         if [ $? -eq 0 ]; then

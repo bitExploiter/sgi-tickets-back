@@ -13,6 +13,10 @@ var migration20250309_0001 = &gormigrate.Migration{
 		// Crear tablas en orden de dependencias
 		// Sin dependencia circular, GORM puede manejar el orden automáticamente
 		return tx.AutoMigrate(
+			&models.TicketDepartamento{},
+			&models.TicketMunicipio{},
+			&models.TicketTipoDocumento{},
+			&models.TicketRegional{},
 			// Catalogos (sin dependencias)
 			&models.TicketDependencia{},
 			&models.TicketSubdependencia{},
@@ -42,6 +46,10 @@ var migration20250309_0001 = &gormigrate.Migration{
 	Rollback: func(tx *gorm.DB) error {
 		// Eliminar tablas en orden inverso de dependencias
 		return tx.Migrator().DropTable(
+			"regionales",
+			"tipo_documentos",
+			"municipios",
+			"departamentos",
 			// Primero las tablas que dependen de tickets
 			"tickets_aprobaciones",
 			"tickets_notificaciones",
